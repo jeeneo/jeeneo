@@ -85,16 +85,6 @@ xh_bphp3_pL = 0.0; xh_bphp3_pR = 0.0;
 
 xh_bpDlyLen = floor(srate / 400);
 xh_lpDlyLen = floor(srate / 200);
-xh_bpDL = 0.0;
-xh_bpDR = xh_bpDL + FIRInit(xh_bpDL, xh_bpDlyLen);
-xh_lpDL = xh_bpDR + FIRInit(xh_bpDR, xh_lpDlyLen);
-xh_lpDR = xh_lpDL + FIRInit(xh_lpDL, xh_lpDlyLen);
-xh_bpPos = 0;
-xh_lpPos = 0;
-i = 0;
-loop(xh_bpDlyLen, xh_bpDL[i] = 0.0; xh_bpDR[i] = 0.0; i += 1;);
-i = 0;
-loop(xh_lpDlyLen, xh_lpDL[i] = 0.0; xh_lpDR[i] = 0.0; i += 1;);
 
 antiPop      = 0.0;
 antiPopInc   = 1.0 / srate;
@@ -173,6 +163,17 @@ pb_delayR = pb_delay + 63;
 pb_dpos   = 0;
 i = 0;
 loop(63, pb_delay[i] = 0.0; pb_delayR[i] = 0.0; i += 1;);
+
+xh_bpDL = pb_delayR + 63;    // <-- chain onto the end of pb_'s memory instead of 0.0
+xh_bpDR = xh_bpDL + FIRInit(xh_bpDL, xh_bpDlyLen);
+xh_lpDL = xh_bpDR + FIRInit(xh_bpDR, xh_lpDlyLen);
+xh_lpDR = xh_lpDL + FIRInit(xh_lpDL, xh_lpDlyLen);
+xh_bpPos = 0;
+xh_lpPos = 0;
+i = 0;
+loop(xh_bpDlyLen, xh_bpDL[i] = 0.0; xh_bpDR[i] = 0.0; i += 1;);
+i = 0;
+loop(xh_lpDlyLen, xh_lpDL[i] = 0.0; xh_lpDR[i] = 0.0; i += 1;);
 
 sw_prevGain = -999.0;
 
