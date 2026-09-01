@@ -164,7 +164,7 @@ pb_dpos   = 0;
 i = 0;
 loop(63, pb_delay[i] = 0.0; pb_delayR[i] = 0.0; i += 1;);
 
-xh_bpDL = pb_delayR + 63;    // <-- chain onto the end of pb_'s memory instead of 0.0
+xh_bpDL = pb_delayR + 63;
 xh_bpDR = xh_bpDL + FIRInit(xh_bpDL, xh_bpDlyLen);
 xh_lpDL = xh_bpDR + FIRInit(xh_bpDR, xh_lpDlyLen);
 xh_lpDR = xh_lpDL + FIRInit(xh_lpDL, xh_lpDlyLen);
