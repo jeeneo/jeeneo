@@ -1,6 +1,7 @@
-desc: ViPER Bass + clarity
+desc: ViPER Bass + clarity (iemu)
 author: VipersAudio
 tags: clarity treble presence enhance viper bass subwoofer
+//integer emulation version
 
 dClarityMode:0<0,2,1{Natural,Ozone,xHiFi}>Clarity mode
 dStrength:3.5<0,14.8,0.1>Clarity gain (dB)
@@ -93,6 +94,8 @@ xh_bphp3_pL = 0.0; xh_bphp3_pR = 0.0;
 xh_bpDlyLen = floor(srate / 400);
 xh_lpDlyLen = floor(srate / 200);
 
+// JamesDSP uses binary32 variables. High-precision handles are used ONLY
+// during coefficient setup, then deleted. Steady-state processing never allocates.
 function H_keep(h) ( hp_temp[hp_count] = h; hp_count += 1; h; );
 function H_f(v) ( H_keep(xFloatF(v)); );
 function H_s(v) ( H_keep(xFloatS(v)); );
@@ -170,7 +173,6 @@ function Fixed_coeff(freq sr) local(w sn cs alpha a0 a1 a2 b0 b1 inv r0 r1 r2 r3
     );
     H_cleanup();
 );
-
 function Multi_coeff(dst freq sr width db peak) local(w sn cs alpha amp a0 a1 a2 b0 b1 b2 inv r0 r1 r2 r3 r4 t) (
     w=D_div(D_mul(H_f(freq),hp_pi2),H_f(sr));
     sn=H_round(H_keep(xsin(w)),53); cs=H_round(H_keep(xcos(w)),53);
@@ -224,75 +226,78 @@ function Bass_coeff_init() (
     hp_ln2half=xFloatS("0.34657359027997264311");
 );
 
-coeff_integer=0; sub_state_size=24;
-bass_lp=0; bass_p44=5; bass_p80=10; bass_swlp=15;
-bass_lp_state=20; bass_sub_state=24;
-bass_taps=48; bass_firL=112; bass_firR=176; bass_delay=240;
-xh_bpDL=320;
-bass_taps[0]=-39241/16777216;
-bass_taps[1]=-34778/16777216;
-bass_taps[2]=-32547/16777216;
-bass_taps[3]=-28101/16777216;
-bass_taps[4]=-25416/16777216;
-bass_taps[5]=-22296/16777216;
-bass_taps[6]=-20518/16777216;
-bass_taps[7]=-17397/16777216;
-bass_taps[8]=-15166/16777216;
-bass_taps[9]=-14276/16777216;
-bass_taps[10]=-8924/16777216;
-bass_taps[11]=-14276/16777216;
-bass_taps[12]=-1777/16777216;
-bass_taps[13]=-16944/16777216;
-bass_taps[14]=9362/16777216;
-bass_taps[15]=-24074/16777216;
-bass_taps[16]=21844/16777216;
-bass_taps[17]=-33000/16777216;
-bass_taps[18]=37900/16777216;
-bass_taps[19]=-43704/16777216;
-bass_taps[20]=53956/16777216;
-bass_taps[21]=-59759/16777216;
-bass_taps[22]=80262/16777216;
-bass_taps[23]=-91854/16777216;
-bass_taps[24]=128430/16777216;
-bass_taps[25]=-142706/16777216;
-bass_taps[26]=295648/16777216;
-bass_taps[27]=-413373/16777216;
-bass_taps[28]=481154/16777216;
-bass_taps[29]=-290295/16777216;
-bass_taps[30]=-545376/16777216;
-bass_taps[31]=10457591/16777216;
-bass_taps[32]=3098785/16777216;
-bass_taps[33]=-2799563/16777216;
-bass_taps[34]=431661/16777216;
-bass_taps[35]=-1316843/16777216;
-bass_taps[36]=-263988/16777216;
-bass_taps[37]=-691204/16777216;
-bass_taps[38]=-388408/16777216;
-bass_taps[39]=-528884/16777216;
-bass_taps[40]=-337573/16777216;
-bass_taps[41]=-419178/16777216;
-bass_taps[42]=-290295/16777216;
-bass_taps[43]=-329101/16777216;
-bass_taps[44]=-251959/16777216;
-bass_taps[45]=-255080/16777216;
-bass_taps[46]=-215385/16777216;
-bass_taps[47]=-199329/16777216;
-bass_taps[48]=-183726/16777216;
-bass_taps[49]=-159651/16777216;
-bass_taps[50]=-152504/16777216;
-bass_taps[51]=-130660/16777216;
-bass_taps[52]=-124855/16777216;
-bass_taps[53]=-106585/16777216;
-bass_taps[54]=-102122/16777216;
-bass_taps[55]=-86955/16777216;
-bass_taps[56]=-83382/16777216;
-bass_taps[57]=-71352/16777216;
-bass_taps[58]=-66890/16777216;
-bass_taps[59]=-58417/16777216;
-bass_taps[60]=-53955/16777216;
-bass_taps[61]=-48166/16777216;
-bass_taps[62]=-43251/16777216;
-bass_taps[63]=0/16777216;
+coeff_integer=1; sub_state_size=96;
+bass_lp=0; bass_p44=20; bass_p80=40; bass_swlp=60;
+bass_lp_state=80; bass_sub_state=96;
+bass_taps=192; bass_firL=448; bass_firR=704; bass_delay=960;
+int_acc=1216; int_L=1224; int_R=1228; int_U=1232; int_m=1236;
+int_v=1240; int_dl=1244; int_fl=1248; int_fr=1252;
+int_gain=1256; int_mix=1260;
+xh_bpDL=1280;
+bass_taps[0]= 183; bass_taps[1]= 102; bass_taps[2]= 255; bass_taps[3]= 255;
+bass_taps[4]= 38; bass_taps[5]= 120; bass_taps[6]= 255; bass_taps[7]= 255;
+bass_taps[8]= 221; bass_taps[9]= 128; bass_taps[10]= 255; bass_taps[11]= 255;
+bass_taps[12]= 59; bass_taps[13]= 146; bass_taps[14]= 255; bass_taps[15]= 255;
+bass_taps[16]= 184; bass_taps[17]= 156; bass_taps[18]= 255; bass_taps[19]= 255;
+bass_taps[20]= 232; bass_taps[21]= 168; bass_taps[22]= 255; bass_taps[23]= 255;
+bass_taps[24]= 218; bass_taps[25]= 175; bass_taps[26]= 255; bass_taps[27]= 255;
+bass_taps[28]= 11; bass_taps[29]= 188; bass_taps[30]= 255; bass_taps[31]= 255;
+bass_taps[32]= 194; bass_taps[33]= 196; bass_taps[34]= 255; bass_taps[35]= 255;
+bass_taps[36]= 60; bass_taps[37]= 200; bass_taps[38]= 255; bass_taps[39]= 255;
+bass_taps[40]= 36; bass_taps[41]= 221; bass_taps[42]= 255; bass_taps[43]= 255;
+bass_taps[44]= 60; bass_taps[45]= 200; bass_taps[46]= 255; bass_taps[47]= 255;
+bass_taps[48]= 15; bass_taps[49]= 249; bass_taps[50]= 255; bass_taps[51]= 255;
+bass_taps[52]= 208; bass_taps[53]= 189; bass_taps[54]= 255; bass_taps[55]= 255;
+bass_taps[56]= 146; bass_taps[57]= 36; bass_taps[58]= 0; bass_taps[59]= 0;
+bass_taps[60]= 246; bass_taps[61]= 161; bass_taps[62]= 255; bass_taps[63]= 255;
+bass_taps[64]= 84; bass_taps[65]= 85; bass_taps[66]= 0; bass_taps[67]= 0;
+bass_taps[68]= 24; bass_taps[69]= 127; bass_taps[70]= 255; bass_taps[71]= 255;
+bass_taps[72]= 12; bass_taps[73]= 148; bass_taps[74]= 0; bass_taps[75]= 0;
+bass_taps[76]= 72; bass_taps[77]= 85; bass_taps[78]= 255; bass_taps[79]= 255;
+bass_taps[80]= 196; bass_taps[81]= 210; bass_taps[82]= 0; bass_taps[83]= 0;
+bass_taps[84]= 145; bass_taps[85]= 22; bass_taps[86]= 255; bass_taps[87]= 255;
+bass_taps[88]= 134; bass_taps[89]= 57; bass_taps[90]= 1; bass_taps[91]= 0;
+bass_taps[92]= 50; bass_taps[93]= 153; bass_taps[94]= 254; bass_taps[95]= 255;
+bass_taps[96]= 174; bass_taps[97]= 245; bass_taps[98]= 1; bass_taps[99]= 0;
+bass_taps[100]= 142; bass_taps[101]= 210; bass_taps[102]= 253; bass_taps[103]= 255;
+bass_taps[104]= 224; bass_taps[105]= 130; bass_taps[106]= 4; bass_taps[107]= 0;
+bass_taps[108]= 67; bass_taps[109]= 177; bass_taps[110]= 249; bass_taps[111]= 255;
+bass_taps[112]= 130; bass_taps[113]= 87; bass_taps[114]= 7; bass_taps[115]= 0;
+bass_taps[116]= 9; bass_taps[117]= 146; bass_taps[118]= 251; bass_taps[119]= 255;
+bass_taps[120]= 160; bass_taps[121]= 173; bass_taps[122]= 247; bass_taps[123]= 255;
+bass_taps[124]= 247; bass_taps[125]= 145; bass_taps[126]= 159; bass_taps[127]= 0;
+bass_taps[128]= 161; bass_taps[129]= 72; bass_taps[130]= 47; bass_taps[131]= 0;
+bass_taps[132]= 53; bass_taps[133]= 72; bass_taps[134]= 213; bass_taps[135]= 255;
+bass_taps[136]= 45; bass_taps[137]= 150; bass_taps[138]= 6; bass_taps[139]= 0;
+bass_taps[140]= 21; bass_taps[141]= 232; bass_taps[142]= 235; bass_taps[143]= 255;
+bass_taps[144]= 204; bass_taps[145]= 248; bass_taps[146]= 251; bass_taps[147]= 255;
+bass_taps[148]= 252; bass_taps[149]= 115; bass_taps[150]= 245; bass_taps[151]= 255;
+bass_taps[152]= 200; bass_taps[153]= 18; bass_taps[154]= 250; bass_taps[155]= 255;
+bass_taps[156]= 12; bass_taps[157]= 238; bass_taps[158]= 247; bass_taps[159]= 255;
+bass_taps[160]= 91; bass_taps[161]= 217; bass_taps[162]= 250; bass_taps[163]= 255;
+bass_taps[164]= 150; bass_taps[165]= 154; bass_taps[166]= 249; bass_taps[167]= 255;
+bass_taps[168]= 9; bass_taps[169]= 146; bass_taps[170]= 251; bass_taps[171]= 255;
+bass_taps[172]= 115; bass_taps[173]= 250; bass_taps[174]= 250; bass_taps[175]= 255;
+bass_taps[176]= 201; bass_taps[177]= 39; bass_taps[178]= 252; bass_taps[179]= 255;
+bass_taps[180]= 152; bass_taps[181]= 27; bass_taps[182]= 252; bass_taps[183]= 255;
+bass_taps[184]= 167; bass_taps[185]= 182; bass_taps[186]= 252; bass_taps[187]= 255;
+bass_taps[188]= 95; bass_taps[189]= 245; bass_taps[190]= 252; bass_taps[191]= 255;
+bass_taps[192]= 82; bass_taps[193]= 50; bass_taps[194]= 253; bass_taps[195]= 255;
+bass_taps[196]= 93; bass_taps[197]= 144; bass_taps[198]= 253; bass_taps[199]= 255;
+bass_taps[200]= 72; bass_taps[201]= 172; bass_taps[202]= 253; bass_taps[203]= 255;
+bass_taps[204]= 156; bass_taps[205]= 1; bass_taps[206]= 254; bass_taps[207]= 255;
+bass_taps[208]= 73; bass_taps[209]= 24; bass_taps[210]= 254; bass_taps[211]= 255;
+bass_taps[212]= 167; bass_taps[213]= 95; bass_taps[214]= 254; bass_taps[215]= 255;
+bass_taps[216]= 22; bass_taps[217]= 113; bass_taps[218]= 254; bass_taps[219]= 255;
+bass_taps[220]= 85; bass_taps[221]= 172; bass_taps[222]= 254; bass_taps[223]= 255;
+bass_taps[224]= 74; bass_taps[225]= 186; bass_taps[226]= 254; bass_taps[227]= 255;
+bass_taps[228]= 72; bass_taps[229]= 233; bass_taps[230]= 254; bass_taps[231]= 255;
+bass_taps[232]= 182; bass_taps[233]= 250; bass_taps[234]= 254; bass_taps[235]= 255;
+bass_taps[236]= 207; bass_taps[237]= 27; bass_taps[238]= 255; bass_taps[239]= 255;
+bass_taps[240]= 61; bass_taps[241]= 45; bass_taps[242]= 255; bass_taps[243]= 255;
+bass_taps[244]= 218; bass_taps[245]= 67; bass_taps[246]= 255; bass_taps[247]= 255;
+bass_taps[248]= 13; bass_taps[249]= 87; bass_taps[250]= 255; bass_taps[251]= 255;
+bass_taps[252]= 0; bass_taps[253]= 0; bass_taps[254]= 0; bass_taps[255]= 0;
 
 xh_bpDR=xh_bpDL+FIRInit(xh_bpDL,xh_bpDlyLen);
 xh_lpDL=xh_bpDR+FIRInit(xh_bpDR,xh_lpDlyLen);
@@ -304,53 +309,125 @@ i=0; loop(xh_lpDlyLen,xh_lpDL[i]=0; xh_lpDR[i]=0; i+=1;);
 hp_temp=xh_lpDR+xh_lpDlyLen+16;
 Bass_coeff_init();
 
-function Bass_bq(c st x) local(y) (
-    y=x*c[0]+st[0]*c[1]+st[1]*c[2]+st[2]*c[3]+st[3]*c[4];
-    st[1]=st[0]; st[0]=x; st[3]=st[2]; st[2]=y; y;
+// Base-256 digits keep every limb product and accumulator exact in float32.
+// Signed high digit is used for multiplication, with modular 64-bit carries.
+function I_copy(dst src) ( memcpy(dst,src,4); );
+function I_from_float(dst v) local(q i) (
+    // ViPER internal PCM16 << 9 corresponds to float full scale 2^24.
+    // Clamp input to the int32 range; truncation, not saturation, occurs inside DSP.
+    v=min(127.99999237060547,max(-128,v))*16777216;
+    v>=0 ? v=floor(v) : v=ceil(v);
+    i=0; loop(4, q=floor(v/256); dst[i]=v-q*256; v=q; i+=1;);
+);
+function I_to_float(src) local(d0 d1 d2 d3 carry t negative) (
+    // Convert magnitude high-to-low: the first 24 bits are exact, so only
+    // the final byte addition rounds. Avoid cancellation near zero for negatives.
+    negative=src[3]>=128;
+    d0=src[0]; d1=src[1]; d2=src[2]; d3=src[3];
+    negative ? (
+        t=256-d0; carry=floor(t/256); d0=t-carry*256;
+        t=255-d1+carry; carry=floor(t/256); d1=t-carry*256;
+        t=255-d2+carry; carry=floor(t/256); d2=t-carry*256;
+        d3=255-d3+carry;
+    );
+    t=(((d3*256+d2)*256+d1)*256+d0)/16777216;
+    negative ? -t : t;
+);
+function I_add(dst a b subtract) local(i c t q) (
+    i=0; c=0; loop(4,
+        t=a[i]+(subtract ? -b[i] : b[i])+c;
+        q=floor(t/256); dst[i]=t-q*256; c=q; i+=1;
+    );
+);
+function I_half(dst src) local(i carry t) (
+    i=3; carry=src[3]>=128 ? 1 : 0;
+    loop(4, t=src[i]; dst[i]=floor(t/2)+carry*128; carry=t%2; i-=1;);
+);
+function I_accum(a b) local(i j av bv) (
+    i=0; loop(4,
+        av=a[i]; i==3 && av>=128 ? av-=256;
+        j=0; loop(4,
+            bv=b[j]; j==3 && bv>=128 ? bv-=256;
+            int_acc[i+j]+=av*bv; j+=1;
+        ); i+=1;
+    );
+);
+function I_shift24(dst) local(i q t) (
+    i=0; loop(7,
+        t=int_acc[i]; q=floor(t/256); int_acc[i]=t-q*256;
+        int_acc[i+1]+=q; i+=1;
+    );
+    dst[0]=int_acc[3]; dst[1]=int_acc[4]; dst[2]=int_acc[5]; dst[3]=int_acc[6];
+);
+function I_mul(dst a b) (
+    memset(int_acc,0,8); I_accum(a,b); I_shift24(dst);
+);
+function I_bq(c st x dst) (
+    memset(int_acc,0,8);
+    I_accum(x,c); I_accum(st,c+4); I_accum(st+4,c+8);
+    I_accum(st+8,c+12); I_accum(st+12,c+16);
+    I_copy(st+4,st); I_copy(st,x); I_copy(st+12,st+8);
+    I_shift24(dst); I_copy(st+8,dst);
 );
 function Bass_reset() (
-    Fixed_coeff(dFrequency,srate); memset(bass_lp_state,0,4);
-    Sub_coeff(); memset(bass_firL,0,64); memset(bass_firR,0,64);
-    memset(bass_delay,0,64); bass_pos=0; bass_fade=0;
+    Fixed_coeff(dFrequency,srate); memset(bass_lp_state,0,16);
+    Sub_coeff(); memset(bass_firL,0,256); memset(bass_firR,0,256);
+    memset(bass_delay,0,256); bass_pos=0; bass_fade=0;
 );
-function Bass_process() local(l r v dl fl fr i j t) (
-    l=spl0*bass_fade; r=spl1*bass_fade;
-    bass_fade=min(1,bass_fade+bass_fade_step);
-    dBassMode==0 ? (
-        v=Bass_bq(bass_lp,bass_lp_state,(l+r)*0.5)*bass_factor;
-        spl0=l+v; spl1=r+v;
-    ) : dBassMode==1 ? (
-        v=Bass_bq(bass_lp,bass_lp_state,(l+r)*0.5);
-        dl=bass_delay[bass_pos]; bass_delay[bass_pos]=v;
-        bass_firL[bass_pos]=l; bass_firR[bass_pos]=r;
-        fl=0; fr=0; i=0; j=bass_pos;
-        loop(64,
-            t=bass_taps[i]; fl+=t*bass_firL[j]; fr+=t*bass_firR[j];
-            i+=1; j-=1; j<0 ? j=63;
+function Bass_process() local(i j tap) (
+    I_from_float(int_L,spl0); I_from_float(int_R,spl1);
+    // Fade is representable exactly up to 2^24. Split it before multiplication.
+    I_from_float(int_U,bass_fade/16777216);
+    I_mul(int_L,int_L,int_U); I_mul(int_R,int_R,int_U);
+    bass_fade=min(16777216,bass_fade+bass_fade_step);
+    dBassMode==0 || dBassMode==1 ? (
+        I_add(int_m,int_L,int_R,0); I_half(int_m,int_m);
+        I_bq(bass_lp,bass_lp_state,int_m,int_v);
+        dBassMode==0 ? (
+            I_mul(int_v,int_v,int_gain);
+            I_add(int_L,int_L,int_v,0); I_add(int_R,int_R,int_v,0);
+        ) : (
+            I_copy(int_dl,bass_delay+bass_pos*4); I_copy(bass_delay+bass_pos*4,int_v);
+            I_copy(bass_firL+bass_pos*4,int_L); I_copy(bass_firR+bass_pos*4,int_R);
+            memset(int_fl,0,4); memset(int_fr,0,4); i=0; j=bass_pos;
+            loop(64,
+                tap=bass_taps+i*4;
+                I_mul(int_v,bass_firL+j*4,tap); I_add(int_fl,int_fl,int_v,0);
+                I_mul(int_v,bass_firR+j*4,tap); I_add(int_fr,int_fr,int_v,0);
+                i+=1; j-=1; j<0 ? j=63;
+            );
+            bass_pos=(bass_pos+1)%64; I_mul(int_dl,int_dl,int_gain);
+            I_add(int_L,int_fl,int_dl,0); I_add(int_R,int_fr,int_dl,0);
         );
-        bass_pos=(bass_pos+1)%64;
-        v=dl*bass_factor; spl0=fl+v; spl1=fr+v;
     ) : (
-        v=Bass_bq(bass_p44,bass_sub_state,l);
-        v=Bass_bq(bass_p80,bass_sub_state+4,v);
-        v=Bass_bq(bass_swlp,bass_sub_state+8,v-l);
-        spl0=l*0.5+v*0.6000000238418579;
-        v=Bass_bq(bass_p44,bass_sub_state+12,r);
-        v=Bass_bq(bass_p80,bass_sub_state+16,v);
-        v=Bass_bq(bass_swlp,bass_sub_state+20,v-r);
-        spl1=r*0.5+v*0.6000000238418579;
+        I_bq(bass_p44,bass_sub_state,int_L,int_v);
+        I_bq(bass_p80,bass_sub_state+16,int_v,int_v);
+        I_add(int_v,int_v,int_L,1);
+        I_bq(bass_swlp,bass_sub_state+32,int_v,int_v);
+        I_mul(int_v,int_v,int_mix); I_half(int_L,int_L); I_add(int_L,int_L,int_v,0);
+        I_bq(bass_p44,bass_sub_state+48,int_R,int_v);
+        I_bq(bass_p80,bass_sub_state+64,int_v,int_v);
+        I_add(int_v,int_v,int_R,1);
+        I_bq(bass_swlp,bass_sub_state+80,int_v,int_v);
+        I_mul(int_v,int_v,int_mix); I_half(int_R,int_R); I_add(int_R,int_R,int_v,0);
     );
+    // Bass-only output before the unchanged floating-point clarity stage.
+    spl0=I_to_float(int_L); spl1=I_to_float(int_R);
 );
 
 bass_factor=0; prevBassMode=-1; prevSpeaker=-1; prevRate=-1;
+int_mix[0]=154; int_mix[1]=153; int_mix[2]=153; int_mix[3]=0;
 
 @sample
+// Sliders are dB; decode to official API integers only when they change so
+// steady-state processing never evaluates pow().
 dStrength!=prevStrengthDb ? (
     prevStrengthDb=dStrength;
     clarityV=(pow(10,dStrength*0.05)-1)*100;
     clarityV=min(450,max(0,clarityV));
     clarityAmount=clarityV*0.009999999776482582;
 );
+// Evaluate settings in the native setter order: rate, speaker, gain, mode.
 srate!=prevRate ? (
     prevRate=srate;
     bass_fade_step=floor(16777216/srate);
@@ -371,6 +448,7 @@ dBassGain!=prevBassDb ? (
 abs(bass_factor-bass_requested)>0.10000000149011612 ? (
     // Native G rounding is float32 before converting to integer.
     bass_factor=floor(bass_requested*16777216+0.5)/16777216;
+    coeff_integer ? I_from_float(int_gain,bass_factor);
     Sub_coeff();
 );
 dBassMode!=prevBassMode ? (

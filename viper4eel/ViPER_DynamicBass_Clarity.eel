@@ -1,6 +1,7 @@
 desc: ViPER Dynamic bass + clarity
 author: VipersAudio, thepbone
 tags: bass filter clarity treble viper presets enhance
+// note: see `viper_dynamicbass_preset.eel` for original
 
 dPreset:0<0,18,1{Extreme Headphone (v2),High-end Headphone (v2),Common Headphone (v2),Low-end Headphone (v2),Common Earphone (v2),Extreme Headphone (v1),High-end Headphone (v1),Common Headphone (v1),Common Earphone (v1),Apple Earphone,Monster Earphone,Moto Earphone,Philips Earphone,SHP2000,SHP9000,Unknown Type I,Unknown Type II,Unknown Type III,Unknown Type IV}>Bass preset
 dBassGain:60<0,100,1>Bass strength (×)
